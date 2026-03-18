@@ -9,3 +9,6 @@ Desktop.ini
 # Local server / environment
 __pycache__/
 *.log
+
+node_modules
+dist
