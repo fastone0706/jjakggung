@@ -1,0 +1,11 @@
+# OS generated files
+Thumbs.db
+Desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+
+# Local server / environment
+__pycache__/
+*.log
