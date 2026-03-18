@@ -95,16 +95,27 @@ function setupEventListeners() {
 
     if (btnFindFate) {
         btnFindFate.addEventListener('click', () => {
-            const birthDate = document.getElementById('birthDate').value;
-            if (!birthDate) {
+            const birthDateValue = document.getElementById('birthDate').value;
+            const birthTimeValue = document.getElementById('birthTime').value;
+            
+            if (!birthDateValue) {
                 alert('생년월일을 입력해주세요.');
                 return;
             }
 
+            const [year, month, day] = birthDateValue.split('-').map(Number);
+            const [hour, minute] = (birthTimeValue || "00:00").split(':').map(Number);
+
             btnFindFate.innerText = "운명의 짝궁을 찾는 중...";
             btnFindFate.disabled = true;
 
+            // Calculate Saju
+            const pillars = SajuEngine.calculatePillars(year, month, day, hour, minute);
+            const stats = SajuEngine.getElementDistribution(pillars);
+
             setTimeout(() => {
+                updateSajuUI(pillars, stats);
+                
                 viewHome.classList.add('hidden');
                 viewMatching.classList.remove('hidden');
                 viewMatching.classList.add('animate-fade-in');
@@ -112,7 +123,7 @@ function setupEventListeners() {
                 
                 btnFindFate.innerText = "운명의 상대 찾기";
                 btnFindFate.disabled = false;
-            }, 2000);
+            }, 1000);
         });
     }
 
@@ -123,6 +134,37 @@ function setupEventListeners() {
             viewMatching.classList.add('animate-fade-in');
         };
     }
+}
+
+// Update Saju UI with real data
+function updateSajuUI(pillars, stats) {
+    // Pillars
+    document.getElementById('saju-year').innerHTML = `${pillars.year.stem}<br>${pillars.year.branch}`;
+    document.getElementById('saju-month').innerHTML = `${pillars.month.stem}<br>${pillars.month.branch}`;
+    document.getElementById('saju-day').innerHTML = `${pillars.day.stem}<br>${pillars.day.branch}`;
+    document.getElementById('saju-hour').innerHTML = `${pillars.hour.stem}<br>${pillars.hour.branch}`;
+
+    // Five Elements Bars
+    const total = 8; // 4 pillars * 2 characters
+    const elements = ['wood', 'fire', 'earth', 'metal', 'water'];
+    const elementNames = { wood: '목', fire: '화', earth: '토', metal: '금', water: '수' };
+
+    elements.forEach(el => {
+        const count = stats[elementNames[el]] || 0;
+        const percent = (count / total) * 100;
+        document.getElementById(`saju-${el}-bar`).style.width = `${percent}%`;
+        document.getElementById(`saju-${el}-text`).innerText = `${elementNames[el]}(${count})`;
+    });
+
+    // Summary Text
+    const dayStem = pillars.day.stem;
+    const dayElement = {
+        '갑': '목(木)', '을': '목(木)', '병': '화(火)', '정': '화(火)', '무': '토(土)', 
+        '기': '토(土)', '경': '금(金)', '신': '금(金)', '임': '수(水)', '계': '수(水)'
+    }[dayStem];
+    
+    document.getElementById('saju-summary-title').innerHTML = `당신은 ${dayElement}의 기운을 타고났습니다`;
+    document.getElementById('saju-summary-desc').innerText = `${dayStem}일간의 기운을 가진 당신은 ${Object.keys(stats).filter(k => stats[k] >= 3).join(', ')} 기운이 강한 편입니다. 당신의 고유한 에너지는 주변 사람들에게 긍정적인 영향을 미칠 것입니다.`;
 }
 
 // Simulate Match Data
